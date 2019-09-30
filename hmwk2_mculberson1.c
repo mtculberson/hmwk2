@@ -21,11 +21,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <math.h>
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_image.h>
 
+                        
 void must_init(bool test, const char *description)
 {
     if(test) return;
@@ -88,15 +90,52 @@ int main()
     dx = 0;
     dy = 0;
     
+    //Modifications made by Matthew
+    //method added to create tile generation
+    
+    int wallsTileXPos = 0;
+    int windowTileXPos[10];
+    int windowTileYPos[10];
+    
+    int window_tile_map[20][15];
+    for (int x = 0; x < 20; x++){
+        for(int y = 0; y < 15 ;y++){
+            window_tile_map[x][y] = 0;
+        }
+    }
+    
+    al_set_target_bitmap(walls);
+    al_draw_bitmap(walls, 0,0,0);
+
+    al_set_target_backbuffer(disp);
+    
+    for(int i = 0; i < 10 ;i++){
+        int randXTile = rand() % 20;
+        int randYTile = rand() % 15;
+        
+        while(window_tile_map[randXTile][randYTile] == 1) {
+            randXTile = rand() % 20;
+            randYTile = rand() % 15;
+        }
+        
+        windowTileXPos[i] = randXTile*32;
+        windowTileYPos[i] = randYTile*32;
+        
+        window_tile_map[randXTile][randYTile] = 1;
+        
+        wallsTileXPos = wallsTileXPos + 32;
+    }
+    
+    //Modifications end
+    
     al_grab_mouse(disp);
     al_hide_mouse_cursor(disp);
     
-#define KEY_SEEN     1
-#define KEY_RELEASED 2
+    #define KEY_SEEN     1
+    #define KEY_RELEASED 2
     
     unsigned char key[ALLEGRO_KEY_MAX];
     memset(key, 0, sizeof(key));
-    
     
     al_start_timer(timer);
     while(1)
@@ -106,8 +145,8 @@ int main()
         switch(event.type)
         {
                 
-                //Modification made by Matthew Culberson
-                //Changes made were to alter the amount of pixels to 4 with each press
+    //Modification made by Matthew Culberson
+    //Changes made were to alter the amount of pixels to 4 with each press
                 
             case ALLEGRO_EVENT_TIMER:
                 if(key[ALLEGRO_KEY_UP])
@@ -119,7 +158,7 @@ int main()
                 if(key[ALLEGRO_KEY_RIGHT])
                     x = x + 4;
                 
-                //End modification
+    //End modification
                 
                 if(key[ALLEGRO_KEY_ESCAPE])
                     done = true;
@@ -132,9 +171,9 @@ int main()
                     x *= -1;
                     dx *= -1;
                 }
-                if(x > 595)
+                if(x > 605)
                 {
-                    x -= (x - 595) * 2;
+                    x -= (x - 605) * 2;
                     dx *= -1;
                 }
                 if(y < 0)
@@ -180,16 +219,43 @@ int main()
         
         if(redraw && al_is_event_queue_empty(queue))
         {
-            al_clear_to_color(al_map_rgb(0, 100, 0));
-            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
-            al_draw_bitmap(Pounce, x + 10, y + 10, 0);
-            al_draw_bitmap(walls, 200, 200, 0);
-            al_flip_display();
             
+            int wallsTileXPos = 0;
+            3(disp);
+            al_clear_to_color(al_map_rgb(0, 100, 0));
+            al_draw_textf(font, al_map_rgba(255, 255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
+            al_draw_bitmap(Pounce, x + 10, y + 10, 0);
+            
+            al_set_target_bitmap(walls);
+            int alpha = 255;
+            for (int i = 0; i < 10; i++){
+                if(i == 9) {
+                    alpha = 0;
+                }
+                
+                al_clear_to_color(al_map_rgba(0,0,0, alpha));
+                
+                al_draw_bitmap_region(walls, wallsTileXPos, 0, 32, 32, windowTileXPos[i], windowTileYPos[i], 0);
+                wallsTileXPos = wallsTileXPos + 32;
+            }
+            
+            if((x <= (windowTileXPos[9] + 16) && x >= (windowTileXPos[9] - 16)) && ((y <= (windowTileYPos[9] + 16)) && (y >= (windowTileYPos[9] - 16))))
+            {
+                al_draw_text(font, al_map_rgb(255, 255, 255), 290, 240, 0, "You win!");
+                done = true;
+            }
+        
+            al_flip_display();
             redraw = false;
+            
+            if(done)
+            {
+                sleep(4);
+                break;
+            }
         }
     }
-    
+
     al_destroy_font(font);
     al_destroy_display(disp);
     al_destroy_timer(timer);
@@ -203,5 +269,4 @@ int main()
 // END code from Doug Thompson
 // https://github.com/liballeg/allegro_wiki/wiki/Allegro-Vivace:-Basic-
 // game-structure
-
 
