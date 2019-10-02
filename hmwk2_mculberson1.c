@@ -27,6 +27,15 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_image.h>
 
+#define xOffset 1
+#define yOffset 2
+#define KEY_SEEN     1
+#define KEY_RELEASED 2
+
+struct Point
+{
+    int x, y, tile_number;
+};
                         
 void must_init(bool test, const char *description)
 {
@@ -35,6 +44,24 @@ void must_init(bool test, const char *description)
     printf("couldn't initialize %s\n", description);
     exit(1);
 }
+
+/*int Get_Correction(int xCoord, int barrierX) {
+    barrierX = barrierX * 32;
+    
+    if((xCoord < barrierX + 32 && xCoord > barrierX)
+   || (xCoord + 32 < barrierX + 32 && xCoord + 32 > barrierX))
+    {
+       if(xCoord < barrierX + 32 && xCoord > barrierX)
+       {
+           return (barrierX + 32) - xCoord;
+       }
+       else
+       {
+           return barrierX - (xCoord + 32);
+       }
+    }
+    return xCoord;
+}*/
 
 int main()
 {
@@ -93,9 +120,6 @@ int main()
     //Modifications made by Matthew
     //method added to create tile generation
     
-    int wallsTileXPos = 0;
-    int windowTileXPos[10];
-    int windowTileYPos[10];
     
     int window_tile_map[20][15];
     for (int x = 0; x < 20; x++){
@@ -104,35 +128,90 @@ int main()
         }
     }
     
-    al_set_target_bitmap(walls);
-    al_draw_bitmap(walls, 0,0,0);
-
-    al_set_target_backbuffer(disp);
     
-    for(int i = 0; i < 10 ;i++){
-        int randXTile = rand() % 20;
-        int randYTile = rand() % 15;
-        
-        while(window_tile_map[randXTile][randYTile] == 1) {
-            randXTile = rand() % 20;
-            randYTile = rand() % 15;
-        }
-        
-        windowTileXPos[i] = randXTile*32;
-        windowTileYPos[i] = randYTile*32;
-        
-        window_tile_map[randXTile][randYTile] = 1;
-        
-        wallsTileXPos = wallsTileXPos + 32;
+    int arraySize = 59;
+    struct Point points[arraySize];
+    int counter = 0;
+    
+    for(int i = 0; i < 15; i++) {
+        points[i].x = i + xOffset;
+        points[i].y = yOffset;
+        points[i].tile_number = 0;
+        counter++;
     }
+    
+    for(int i = 0; i < 14 + xOffset; i++) {
+        points[counter].x = i + xOffset;;
+        points[counter].y = 10 + yOffset;
+        points[counter].tile_number = 1;
+        counter++;
+    }
+    
+    for(int i = 0; i < 10 + xOffset; i++) {
+        points[counter].x = xOffset;
+        points[counter].y = i + yOffset;
+        points[counter].tile_number = 2;
+        counter++;
+    }
+    
+    for(int i = 0; i < 2 + yOffset; i++) {
+        points[counter].x = 14 + xOffset;
+        points[counter].y = i + yOffset;
+        points[counter].tile_number = 3;
+        counter++;
+    }
+    
+    for(int i = 0; i < 4 + yOffset; i++) {
+        points[counter].x = 14 + xOffset;
+        points[counter].y = i + yOffset + 5;
+        points[counter].tile_number = 3;
+        counter++;
+    }
+    
+    points[counter].x = 5 + xOffset;
+    points[counter].y = 6 + yOffset;
+    points[counter].tile_number = 4;
+    counter++;
+    
+    points[counter].x = 12 + xOffset;
+    points[counter].y = 2 + yOffset;
+    points[counter].tile_number = 4;
+    counter++;
+    
+    points[counter].x = 12 + xOffset;
+    points[counter].y = 7 + yOffset;
+    points[counter].tile_number = 5;
+    counter++;
+    
+    points[counter].x = 7 + xOffset;
+    points[counter].y = (rand() % 8) + yOffset;
+    points[counter].tile_number = 6;
+    counter++;
+    
+    points[counter].x = 13 + xOffset;
+    points[counter].y = 3 + yOffset;
+    points[counter].tile_number = 7;
+    counter++;
+    
+    points[counter].x = 11 + xOffset;
+    points[counter].y = 4 + yOffset;
+    points[counter].tile_number = 7;
+    counter++;
+    
+    points[counter].x = 5 + xOffset;
+    points[counter].y = 4 + yOffset;
+    points[counter].tile_number = 8;
+    counter++;
+    
+    points[counter].x = 15 + xOffset;
+    points[counter].y = yOffset + 4;
+    points[counter].tile_number = 9;
+    counter++;
     
     //Modifications end
     
     al_grab_mouse(disp);
     al_hide_mouse_cursor(disp);
-    
-    #define KEY_SEEN     1
-    #define KEY_RELEASED 2
     
     unsigned char key[ALLEGRO_KEY_MAX];
     memset(key, 0, sizeof(key));
@@ -220,31 +299,46 @@ int main()
         if(redraw && al_is_event_queue_empty(queue))
         {
             
-            int wallsTileXPos = 0;
-            3(disp);
+            
+            al_set_target_backbuffer(al_get_current_display());
             al_clear_to_color(al_map_rgb(0, 100, 0));
             al_draw_textf(font, al_map_rgba(255, 255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
             al_draw_bitmap(Pounce, x + 10, y + 10, 0);
             
-            al_set_target_bitmap(walls);
-            int alpha = 255;
-            for (int i = 0; i < 10; i++){
-                if(i == 9) {
-                    alpha = 0;
+           
+
+            size_t arraySize = sizeof(points)/sizeof(points[0]);
+            //printf("%d\n", arraySize);
+            for (int i = 0; i < arraySize; i++){
+                if(points[i].tile_number == 9) {
+                    al_draw_bitmap_region(walls, points[i].tile_number * 32, 0, 32, 32, points[i].x * 32, points[i].y * 32, 0);
+                } else {
+                    al_draw_tinted_bitmap_region(walls, al_map_rgba(0, 0, 0, 0), points[i].tile_number * 32, 0, 32, 32, points[i].x * 32, points[i].y * 32, 0);
                 }
-                
-                al_clear_to_color(al_map_rgba(0,0,0, alpha));
-                
-                al_draw_bitmap_region(walls, wallsTileXPos, 0, 32, 32, windowTileXPos[i], windowTileYPos[i], 0);
-                wallsTileXPos = wallsTileXPos + 32;
             }
-            
-            if((x <= (windowTileXPos[9] + 16) && x >= (windowTileXPos[9] - 16)) && ((y <= (windowTileYPos[9] + 16)) && (y >= (windowTileYPos[9] - 16))))
+
+            if((x <= (points[arraySize - 1].x * 32 + 16) && x >= (points[arraySize - 1].x * 32 - 16)) &&
+               ((y <= (points[arraySize - 1].y * 32 + 16)) && (y >= (points[arraySize - 1].y * 32 - 16))))
             {
                 al_draw_text(font, al_map_rgb(255, 255, 255), 290, 240, 0, "You win!");
                 done = true;
             }
-        
+            
+            for(int i = 0; i < arraySize; i++) {
+                if(points[i].tile_number != 9) {
+                    if((x <= (points[i].x * 32 + 30) && x >= (points[i].x * 32 - 31)) &&
+                       ((y <= (points[i].y * 32 + 30)) && (y >= (points[i].y * 32 - 31))))
+                    {
+                        //x = Get_Correction(x, points[i].x);
+                        //y = Get_Correction(y, points[i].y);
+                        
+                        al_draw_tinted_bitmap_region(walls, al_map_rgba(255, 255, 0, 255), points[i].tile_number * 32, 0, 32, 32, points[i].x * 32, points[i].y * 32, 0);
+                        
+                        al_draw_text(font, al_map_rgb(255, 255, 255), 290, 450, 0, "Barrier Hit!");
+                    }
+                }
+            }
+            
             al_flip_display();
             redraw = false;
             
@@ -256,17 +350,15 @@ int main()
         }
     }
 
+    al_destroy_bitmap(Pounce);
+    al_destroy_bitmap(walls);
     al_destroy_font(font);
     al_destroy_display(disp);
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
-    al_destroy_bitmap(Pounce);
-    al_destroy_bitmap(walls);
     
     return 0;
 }
-
 // END code from Doug Thompson
 // https://github.com/liballeg/allegro_wiki/wiki/Allegro-Vivace:-Basic-
 // game-structure
-
